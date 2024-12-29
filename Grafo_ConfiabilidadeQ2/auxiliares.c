@@ -150,10 +150,11 @@ void descobrir_caminho_mais_confiavel(graf *Grafo, int criado_grafo){
         //Algoritmo de Dijkstra    
         dijkstra(Grafo, vertice_inicial, distancia, vertice_anterior); 
         
-        if(distancia[vertice_final] < INFINITO){
+        if(distancia[vertice_final] < (float)INFINITO){
             printf("Este é o caminho mais confiavel entre %d e %d: ", vertice_inicial, vertice_final); 
             mostrar_caminho(vertice_anterior, vertice_final); 
-            printf("\nConfiabilidade: %.5f\n", exp(distancia[vertice_final])); 
+            float confiab = expf(-distancia[vertice_final]);
+            printf("\nConfiabilidade: %.5f\n", confiab); 
             situacao = 1; //sucesso
         }else{
             //Nenhum caminho confiavel foi encontrado 
@@ -171,58 +172,50 @@ void descobrir_caminho_mais_confiavel(graf *Grafo, int criado_grafo){
 
 //Dijkstra vai ficar aqui. 
 
-void dijkstra(graf *grafo, int vertice_inicial, float distancia[], int vertice_anterior[]){
-   
-   //
-   bool visitados[LIMITE_VERTICES] = {false}; 
-   int vertice_localizado; 
-   float confiabilidade;
+void dijkstra(graf *G, int origem, float dist[], int anterior[]) {
+    bool visitado[LIMITE_VERTICES] = {false};
+    int n = G->numero_vertices;
 
-   for(int i = 0; i < grafo->numero_vertices; i++){
-      distancia[i] = INFINITO; //inicializa com "infinito"
-      vertice_anterior[i] = -1; //inicializa com -1      
-   } 
+    // Inicializa distancias e anterior
+    for (int i = 0; i < n; i++) {
+        dist[i] = (float)INFINITO;
+        anterior[i] = -1;
+    }
+    dist[origem] = 0.0f;
 
-   distancia[vertice_inicial] = 0;  //A distancia pra ele mesmo é zero
+    for (int cont = 0; cont < n - 1; cont++) {
+        int u = descobrir_menor_dist_vertice(dist, visitado, n);
+        if (u == -1) break;
 
-   for(int i = 0; i < grafo->numero_vertices - 1; i++){
-       
-       vertice_localizado = descobrir_menor_dist_vertice(distancia, visitados, grafo->numero_vertices);
+        visitado[u] = true;
 
-       visitados[vertice_localizado] = true; //Marca o vertice como já percorrido
+        for (int v = 0; v < n; v++) {
+            float r = G->Arestas[u][v].confiabilidade;
+            if (!visitado[v] && r > 0.0f) {
+                // custo = -log(r). Se r=1, custo=0; se r<1, custo>0
+                float custo = -logf(r);
 
-       for(int j = 0; j < grafo->numero_vertices; j++){
-
-          confiabilidade = grafo->Arestas[vertice_localizado][j].confiabilidade; 
-          // Verifica se o vértice não foi visitado, a confiabilidade é válida e
-          // a distância até o vértice atual somada ao logaritmo da confiabilidade
-          // é maior que a distância atual do vértice destino
-          if(!visitados[j] && distancia[vertice_localizado] + log(confiabilidade) < distancia[j]){
-              // Atualiza a distância e o vértice anterior
-              distancia[j] = distancia[vertice_localizado] * confiabilidade; 
-              vertice_anterior[j] = vertice_localizado; 
-          }
-
-       }
-      
-   }
-   
-
-
+                float nova_dist = dist[u] + custo;
+                if (nova_dist < dist[v]) {
+                    dist[v] = nova_dist;
+                    anterior[v] = u;
+                }
+            }
+        }
+    }
 }
 
 int descobrir_menor_dist_vertice(float distancia[], bool visitados[], int numero_vertices){
-    float minimo = INFINITO; 
-    int indice_minimo = -1; 
+    float min = (float)INFINITO; 
+    int indice_min = -1;
 
-    for(int i = 0; i < numero_vertices; i++){
-        if(!visitados[i] && distancia[i] < minimo){
-            minimo = distancia[i]; //Atualiza com um valor menor
-            indice_minimo = i; 
+    for (int i = 0; i < numero_vertices; i++) {
+        if (!visitados[i] && distancia[i] < min) {
+            min = distancia[i];
+            indice_min = i;
         }
     }
-
-    return indice_minimo; 
+    return indice_min; 
 }
 
 void mostrar_caminho(int vertice_anterior[], int vertice){
