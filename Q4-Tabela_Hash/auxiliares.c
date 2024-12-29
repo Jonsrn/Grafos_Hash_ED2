@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <windows.h>
 #include "hash.h"
 
 
@@ -67,32 +68,31 @@ void operacao_hash_A(fcnario funcionarios[TOTAL_FUNCIONARIOS], int tamanho_vetor
     int situacao; 
     if(importado_txt == 1){
         int qtd_colisoes = 0;
-        printf("O tamanho do vetor é: %d\n", tamanho_vetor); 
         fcnario hash_funcionarios[tamanho_vetor];
         int slots_ocupados = 0;
+        long long t1, t2;
 
         // Inicializar o vetor hash
         for (int i = 0; i < tamanho_vetor; i++) {
             strcpy(hash_funcionarios[i].Matricula, ""); // Indica posição vazia
         }
 
+        // Marca tempo inicial
+        t1 = tempo_atual_nano();
+
         for (int i = 0; i < TOTAL_FUNCIONARIOS; i++) {
             // Rotação de 2 dígitos para a esquerda
             int nova_chave = rotacao2dig(funcionarios[i].Matricula);
-            printf("Após rotacionar os 2 dígitos, a chave é: %d\n", nova_chave);
 
             // Extrair o 2º, 4º e 6º dígito
             nova_chave = extrair_digitos(nova_chave);
-            printf("Após extrair o 2°, 4° e 6° dígito: %d\n", nova_chave);
 
             // Obter o resto da divisão pelo tamanho do vetor
             nova_chave = (nova_chave % tamanho_vetor);
-            printf("Após obter o resto da divisão: %d\n", nova_chave);
 
             // Se todos os slots já estão ocupados, substituir diretamente
             if (slots_ocupados == tamanho_vetor) {
                 hash_funcionarios[nova_chave] = funcionarios[i];
-                printf("Substituindo na posição %d devido à ocupação total.\n", nova_chave);
                 continue;
             }
 
@@ -102,13 +102,12 @@ void operacao_hash_A(fcnario funcionarios[TOTAL_FUNCIONARIOS], int tamanho_vetor
             
             // Enquanto a posição NÃO estiver vazia
             while (strcmp(hash_funcionarios[posicao_final].Matricula, "") != 0) {
-                qtd_colisoes++; // está contando TODAS as colisões
+                qtd_colisoes++; 
                 posicao_final = tratar_colisao_A(posicao_final, atoi(funcionarios[i].Matricula), tamanho_vetor, tentativas);
                 tentativas++;
 
                 // Evita loop infinito: se exceder o tamanho do vetor, paramos
                 if (tentativas > tamanho_vetor) {
-                    printf("[AVISO] Tentamos mais de %d colisões. Tabela pode estar saturada.\n", tamanho_vetor);
                     break; 
                 }
             }
@@ -124,8 +123,14 @@ void operacao_hash_A(fcnario funcionarios[TOTAL_FUNCIONARIOS], int tamanho_vetor
             }
         }
 
+        // Marca tempo final
+        t2 = tempo_atual_nano(); 
+
         // Exibir o número de colisões
-        printf("Total de colisões: %d\n", qtd_colisoes); 
+        printf("Total de colisões do Hash A, com vetor de %d posições: %d\n", tamanho_vetor, qtd_colisoes); 
+
+        //Exibir o tempo decorrido
+        printf("Tempo para executar o Hash A, com um vetor de %d posições : %lld ns\n", tamanho_vetor, (t2 - t1));
 
         situacao = 1; //sucesso
     } else {
@@ -203,13 +208,18 @@ int tratar_colisao_B(int chave, int tamanho_vetor) {
 void operacao_hash_B(fcnario funcionarios[], int tamanho_vetor, int importado_txt) {
     int situacao; 
     if(importado_txt == 1){    
+        long long t1, t2; 
+
         // Vetor que guardará o índice do funcionário armazenado em cada posição.
         // Se a posição estiver vazia, ela fica com -1.
         int Tabela_Hash[tamanho_vetor];
         memset(Tabela_Hash, -1, sizeof(Tabela_Hash)); // Inicializa com -1
 
-        int colisao_count = 0;     // Contador de colisões (todas as tentativas mal-sucedidas)
+        int qtd_colisoes = 0;     // Contador de colisões (todas as tentativas mal-sucedidas)
         int slots_ocupados = 0;    // Quantidade de slots preenchidos
+
+        // Marca tempo inicial
+        t1 = tempo_atual_nano();
 
         for (int i = 0; i < TOTAL_FUNCIONARIOS; i++) {
             // 1) Calcula a "chave bruta" via Hash B (fole shift)
@@ -218,10 +228,8 @@ void operacao_hash_B(fcnario funcionarios[], int tamanho_vetor, int importado_tx
             int index = chave % tamanho_vetor;
             int index_inicial = index;  
 
-            // >>> Se a tabela já está "completamente" cheia, substitui direto e não conta colisão
-            if (slots_ocupados == tamanho_vetor) {
-                // Exemplo: substitui o slot no índice calculado (ou, se preferir, sempre o index_inicial)
-                printf("[Hash B] Tabela cheia. Substituindo diretamente no índice %d.\n", index_inicial);
+            // Se a tabela já está "completamente" cheia, substitui direto e não conta colisão
+            if (slots_ocupados == tamanho_vetor) {                
                 Tabela_Hash[index_inicial] = i;
                 continue; // Vá para o próximo funcionário
             }
@@ -229,7 +237,7 @@ void operacao_hash_B(fcnario funcionarios[], int tamanho_vetor, int importado_tx
             // >>> Se ainda não está cheia, vamos tentar inserir
             while (Tabela_Hash[index] != -1) {
                 // Cada vez que achamos a posição ocupada, incrementa colisões
-                colisao_count++;
+                qtd_colisoes++;
                 // Passo de colisão: soma 7 e faz módulo
                 index = tratar_colisao_B(index, tamanho_vetor); 
 
@@ -237,23 +245,25 @@ void operacao_hash_B(fcnario funcionarios[], int tamanho_vetor, int importado_tx
                 // significa que não há slot livre (tabela realmente cheia).
                 if (index == index_inicial) {
                     // Substitui a posição inicial (ou a que desejar)
-                    printf("[Hash B] Tabela cheia ao dar a volta. Substituindo no índice %d.\n", index_inicial);
                     Tabela_Hash[index_inicial] = i;
                     break; // encerra o while
                 }
             }
 
-            // >>> Se a posição está livre (não -1), insere
+            //Se a posição está livre (não -1), insere
             if (Tabela_Hash[index] == -1) {
                 Tabela_Hash[index] = i; 
                 slots_ocupados++;
-                printf("[Hash B] Funcionário %s (Matrícula %s) alocado no índice %d.\n",
-                    funcionarios[i].Nome, funcionarios[i].Matricula, index);
             }
         }
 
+        // Marca tempo final
+        t2 = tempo_atual_nano(); 
+
         // Exibe o número total de colisões
-        printf("[Hash B] Número total de colisões: %d\n", colisao_count);
+        printf("Total de colisões do Hash B, com vetor de %d posições: %d\n", tamanho_vetor,  qtd_colisoes);
+
+        printf("\nTempo para executar o Hash B, com um vetor de %d posições : %lld ns\n", tamanho_vetor, (t2 - t1));
         situacao = 1; //sucesso
     }else{
         //dataset ainda não montado
@@ -264,3 +274,11 @@ void operacao_hash_B(fcnario funcionarios[], int tamanho_vetor, int importado_tx
 }
 
 
+
+// Função para medir tempo em nanossegundos
+long long tempo_atual_nano() {
+    LARGE_INTEGER frequencia, contador;
+    QueryPerformanceFrequency(&frequencia);
+    QueryPerformanceCounter(&contador);
+    return (contador.QuadPart * 1000000000LL) / frequencia.QuadPart;
+}

@@ -24,7 +24,8 @@ void sobre();
 
 //Prototipo das funções auxiliares
 
-void importar_dataset(fcnario funcionarios[TOTAL_FUNCIONARIOS], const char *nome_arquivo, int *importado_txt); 
+void importar_dataset(fcnario funcionarios[TOTAL_FUNCIONARIOS], const char *nome_arquivo, int *importado_txt); //Função que Importa o Dataset do TXT
+long long tempo_atual_nano(); //Função que mede o tempo
 
 //Funções referentes ao Hash A
 void operacao_hash_A(fcnario funcionarios[TOTAL_FUNCIONARIOS], int tamanho_vetor, int importado_txt); //Função principal que lida com os passos do Hash A
@@ -36,7 +37,8 @@ int primeiro_digito(int chave_original); //Função que coleta o primeiro digito
 //Funções referentes ao Hash B
 
 void operacao_hash_B(fcnario funcionarios[], int tamanho_vetor, int importado_txt); //Função principal que lida com os passos do Hash A
-
+int tratar_colisao_B(int chave, int tamanho_vetor); 
+int hash_b(char matricula[]); 
 
 
 
