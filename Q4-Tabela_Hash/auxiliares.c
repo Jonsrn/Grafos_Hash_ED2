@@ -91,10 +91,6 @@ void operacao_hash_A(fcnario funcionarios[TOTAL_FUNCIONARIOS], int tamanho_vetor
             nova_chave = (nova_chave % tamanho_vetor);
 
             // Se todos os slots já estão ocupados, substituir diretamente
-            if (slots_ocupados == tamanho_vetor) {
-                hash_funcionarios[nova_chave] = funcionarios[i];
-                continue;
-            }
 
             // Tentar inserir ou tratar colisões
             int posicao_final = nova_chave;
@@ -103,7 +99,7 @@ void operacao_hash_A(fcnario funcionarios[TOTAL_FUNCIONARIOS], int tamanho_vetor
             // Enquanto a posição NÃO estiver vazia
             while (strcmp(hash_funcionarios[posicao_final].Matricula, "") != 0) {
                 qtd_colisoes++; 
-                posicao_final = tratar_colisao_A(posicao_final, atoi(funcionarios[i].Matricula), tamanho_vetor, tentativas);
+                posicao_final = tratar_colisao_A(posicao_final, atoi(funcionarios[i].Matricula), tamanho_vetor);
                 tentativas++;
 
                 // Evita loop infinito: se exceder o tamanho do vetor, paramos
@@ -146,11 +142,29 @@ void operacao_hash_A(fcnario funcionarios[TOTAL_FUNCIONARIOS], int tamanho_vetor
 
 
 // Função para rotacionar 2 dígitos para a esquerda
+
+
 int rotacao2dig(const char *matricula) {
     char rotacionada[7];
-    snprintf(rotacionada, sizeof(rotacionada), "%s%c%c", matricula + 2, matricula[0], matricula[1]);
+    int len = strlen(matricula);
+
+    // Colocar os dois últimos caracteres no início
+    rotacionada[0] = matricula[len - 2];
+    rotacionada[1] = matricula[len - 1];
+
+    // Copiar o restante dos caracteres para frente
+    for (int i = 0; i < len - 2; i++) {
+        rotacionada[i + 2] = matricula[i];
+    }
+
+    // Adicionar o terminador de string
+    rotacionada[len] = '\0';
+
+    // Converter para inteiro e retornar
     return atoi(rotacionada);
 }
+
+
 
 // Função para extrair o 2º, 4º e 6º dígito
 int extrair_digitos(int matricula) {
@@ -160,10 +174,10 @@ int extrair_digitos(int matricula) {
 }
 
 // Função para tratar colisões
-int tratar_colisao_A(int chave_atual, int chave_original, int tamanho_vetor, int tentativas) { 
+int tratar_colisao_A(int chave_atual, int chave_original, int tamanho_vetor) { 
     // Obtém o primeiro dígito da chave original usando sua função 
     int primeiro_digito_valor = primeiro_digito(chave_original); // Calcula a nova posição 
-    int nova_posicao = (chave_atual + primeiro_digito_valor + tentativas) % tamanho_vetor; 
+    int nova_posicao = (chave_atual + primeiro_digito_valor) % tamanho_vetor; 
     return nova_posicao;
 }
 // Função para obter o primeiro dígito
@@ -182,20 +196,14 @@ int primeiro_digito(int chave_original) {
 //Funções Referentes ao Hash B
 
 int hash_b(char matricula[]) {
-    char aux[6];  // array auxiliar para armazenar os dígitos rearranjados
+    // Soma os dois números gerados a partir de posições específicas da matrícula
+    return (atoi((char[]){matricula[0], matricula[2], matricula[5], '\0'}) + 
+            atoi((char[]){matricula[1], matricula[3], matricula[4], '\0'}));
+}
 
-    // Reorganização da matrícula conforme a especificação
-    aux[0] = matricula[0];   // 1º dígito
-    aux[1] = matricula[2];   // 3º dígito
-    aux[2] = matricula[5];   // 6º dígito
-    aux[3] = matricula[1];   // 2º dígito
-    aux[4] = matricula[3];   // 4º dígito
-    aux[5] = matricula[4];   // 5º dígito
-
-    // Converte o array de caracteres 'aux' para um inteiro
-    int valorInteiro = atoi(aux);
-
-    return valorInteiro;
+int foldShift(char *palavra){
+	return (atoi((char[]){palavra[0],palavra[2],palavra[5]}) + 
+		atoi((char[]){palavra[1],palavra[3],palavra[4]}));	
 }
 
 // Função para tratar colisões, somando 7 à chave
@@ -228,13 +236,7 @@ void operacao_hash_B(fcnario funcionarios[], int tamanho_vetor, int importado_tx
             int index = chave % tamanho_vetor;
             int index_inicial = index;  
 
-            // Se a tabela já está "completamente" cheia, substitui direto e não conta colisão
-            if (slots_ocupados == tamanho_vetor) {                
-                Tabela_Hash[index_inicial] = i;
-                continue; // Vá para o próximo funcionário
-            }
-
-            // >>> Se ainda não está cheia, vamos tentar inserir
+            //vamos tentar inserir
             while (Tabela_Hash[index] != -1) {
                 // Cada vez que achamos a posição ocupada, incrementa colisões
                 qtd_colisoes++;
@@ -282,3 +284,7 @@ long long tempo_atual_nano() {
     QueryPerformanceCounter(&contador);
     return (contador.QuadPart * 1000000000LL) / frequencia.QuadPart;
 }
+
+
+
+
