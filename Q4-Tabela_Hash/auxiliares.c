@@ -92,30 +92,36 @@ void operacao_hash_A(fcnario funcionarios[TOTAL_FUNCIONARIOS], int tamanho_vetor
 
             // Se todos os slots já estão ocupados, substituir diretamente
 
-            // Tentar inserir ou tratar colisões
-            int posicao_final = nova_chave;
-            int tentativas = 0;
-            
-            // Enquanto a posição NÃO estiver vazia
-            while (strcmp(hash_funcionarios[posicao_final].Matricula, "") != 0) {
-                qtd_colisoes++; 
-                posicao_final = tratar_colisao_A(posicao_final, atoi(funcionarios[i].Matricula), tamanho_vetor);
-                tentativas++;
-
-                // Evita loop infinito: se exceder o tamanho do vetor, paramos
-                if (tentativas > tamanho_vetor) {
-                    break; 
-                }
-            }
-
-            // Se ainda está vazio, insere; senão, significa que o while quebrou por saturação
-            if (strcmp(hash_funcionarios[posicao_final].Matricula, "") == 0) {
-                hash_funcionarios[posicao_final] = funcionarios[i];
-                slots_ocupados++;
-            } else {
-                
+            if (slots_ocupados == tamanho_vetor) {
                 hash_funcionarios[nova_chave] = funcionarios[i];
-              
+                
+            }else{
+
+                // Tentar inserir ou tratar colisões
+                int posicao_final = nova_chave;
+                int tentativas = 0;
+                
+                // Enquanto a posição NÃO estiver vazia
+                while (strcmp(hash_funcionarios[posicao_final].Matricula, "") != 0) {
+                    qtd_colisoes++; 
+                    posicao_final = tratar_colisao_A(posicao_final, atoi(funcionarios[i].Matricula), tamanho_vetor);
+                    tentativas++;
+
+                    // Evita loop infinito: se exceder o tamanho do vetor, paramos
+                    if (tentativas > tamanho_vetor) {
+                        break; 
+                    }
+                }
+
+                // Se ainda está vazio, insere; senão, significa que o while quebrou por saturação
+                if (strcmp(hash_funcionarios[posicao_final].Matricula, "") == 0) {
+                    hash_funcionarios[posicao_final] = funcionarios[i];
+                    slots_ocupados++;
+                } else {
+                    
+                    hash_funcionarios[nova_chave] = funcionarios[i];
+                
+                }
             }
         }
 
@@ -236,29 +242,35 @@ void operacao_hash_B(fcnario funcionarios[], int tamanho_vetor, int importado_tx
             int index = chave % tamanho_vetor;
             int index_inicial = index;  
 
-            //vamos tentar inserir
-            while (Tabela_Hash[index] != -1) {
-                // Cada vez que achamos a posição ocupada, incrementa colisões
-                qtd_colisoes++;
-                // Passo de colisão: soma 7 e faz módulo
-                index = tratar_colisao_B(index, tamanho_vetor); 
+            if (slots_ocupados == tamanho_vetor) {                
+                Tabela_Hash[index_inicial] = i;
+                //Se o vetor tá lotado, ao invés de pingar todo o vetor e voltar ao inicio já insere diretamente. 
+                
+            }else{
 
-                // Se demos a volta inteira e voltamos ao index_inicial,
-                // significa que não há slot livre (tabela realmente cheia).
-                if (index == index_inicial) {
-                    // Substitui a posição inicial (ou a que desejar)
-                    Tabela_Hash[index_inicial] = i;
-                    break; // encerra o while
+                //vamos tentar inserir
+                while (Tabela_Hash[index] != -1) {
+                    // Cada vez que achamos a posição ocupada, incrementa colisões
+                    qtd_colisoes++;
+                    // Passo de colisão: soma 7 e faz módulo
+                    index = tratar_colisao_B(index, tamanho_vetor); 
+
+                    // Se demos a volta inteira e voltamos ao index_inicial,
+                    // significa que não há slot livre (tabela realmente cheia).
+                    if (index == index_inicial) {
+                        // Substitui a posição inicial (ou a que desejar)
+                        Tabela_Hash[index_inicial] = i;
+                        break; // encerra o while
+                    }
+                }
+
+                //Se a posição está livre (não -1), insere
+                if (Tabela_Hash[index] == -1) {
+                    Tabela_Hash[index] = i; 
+                    slots_ocupados++;
                 }
             }
-
-            //Se a posição está livre (não -1), insere
-            if (Tabela_Hash[index] == -1) {
-                Tabela_Hash[index] = i; 
-                slots_ocupados++;
-            }
         }
-
         // Marca tempo final
         t2 = tempo_atual_nano(); 
 
